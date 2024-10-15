@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'nim-gen-ai'
+    static_configs:
+      - targets: ['nim-gen-ai:8000']

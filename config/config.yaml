@@ -1,0 +1,75 @@
+# nim_base_url: "http://localhost:8000"
+# max_batch_size: 32
+# max_latency: 0.1
+# model_config:
+#   gpt2:
+#     model_path: "path/to/gpt2/model"
+#     num_gpus: 2
+#   bert:
+#     model_path: "path/to/bert/model"
+#     num_gpus: 1
+# kubernetes:
+#   namespace: "genai-accelerator"
+#   deployment_name: "nim-gen-ai"
+# monitoring:
+#   prometheus_port: 8000
+#   update_interval: 60
+
+
+# NIM (NVIDIA Inference Microservices) base URL
+# This is a placeholder. Replace with your actual NIM service URL when you have it set up
+nim_base_url: "http://nim-service:8000"
+
+# Maximum batch size for inference requests
+max_batch_size: 32
+
+# Maximum latency (in seconds) to wait before processing a batch
+max_latency: 0.1
+
+# Model configurations
+model_config:
+  gpt2:
+    # Using the model ID from Hugging Face
+    model_path: "gpt2"
+    # Number of GPUs to use for this model
+    num_gpus: 1
+  bert-base-uncased:
+    # Using the model ID from Hugging Face
+    model_path: "bert-base-uncased"
+    # Number of GPUs to use for this model
+    num_gpus: 1
+
+# Kubernetes settings
+kubernetes:
+  # Namespace where the application will be deployed
+  namespace: "genai-accelerator"
+  # Name of the Kubernetes deployment
+  deployment_name: "nim-gen-ai"
+
+# Monitoring settings
+monitoring:
+  # Port for Prometheus metrics
+  prometheus_port: 8000
+  # Interval (in seconds) for updating metrics
+  update_interval: 60
+
+# Logging settings
+logging:
+  # Logging level (e.g., "DEBUG", "INFO", "WARNING", "ERROR")
+  level: "INFO"
+  # Path to the log file, relative to the application root
+  file_path: "logs/genai-accelerator.log"
+
+# Security settings
+security:
+  # Enable API authentication (true/false)
+  enable_auth: false
+  # API key for authentication (if enable_auth is true)
+  # api_key: "secret-api-key"
+
+# Performance tuning
+performance:
+  # Enable TensorRT optimization (true/false)
+  enable_tensorrt: true
+  # Enable Automatic Mixed Precision (true/false)
+  enable_amp: true

@@ -1,0 +1,5 @@
+apiVersion: v2
+name: nim-gen-ai
+description: A Helm chart for NIM-based GenAI Accelerator
+version: 0.1.0
+appVersion: "1.0.0"

@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nim-gen-ai
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nim-gen-ai
+  template:
+    metadata:
+      labels:
+        app: nim-gen-ai
+    spec:
+      containers:
+      - name: nim-gen-ai
+        image: your-registry/nim-gen-ai:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        volumeMounts:
+        - name: config
+          mountPath: /app/config
+      volumes:
+      - name: config
+        configMap:
+          name: nim-gen-ai-config

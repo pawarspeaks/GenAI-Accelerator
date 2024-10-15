@@ -1,0 +1,25 @@
+replicaCount: 1
+
+image:
+  repository: your-registry/nim-gen-ai
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources:
+  limits:
+    nvidia.com/gpu: 1
+
+autoscaling:
+  enabled: true
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 50
+
+config:
+  nim_base_url: "http://nim-service:8000"
+  max_batch_size: 32
+  max_latency: 0.1
