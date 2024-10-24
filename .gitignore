@@ -1,1 +1,12 @@
-logs/
+/venv
+
+/models/transformer_model
+
+.env
+
+# Additional common Python ignores (optional, but helpful)
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl

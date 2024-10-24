@@ -1,117 +1,94 @@
+# src/main.py
+from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel, Field
+from typing import List, Optional
 import uvicorn
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from contextlib import asynccontextmanager
-from nim_client import NIMClient
-from model_deployer import ModelDeployer
-from dynamic_batcher import DynamicBatcher, batch_inference
-from model_parallelism import ModelParallelNIMWrapper
-from monitoring import Monitoring
-from auto_scaler import AutoScaler
-import yaml
-import asyncio
-import time
-import os
+from prometheus_client import start_http_server
+import threading
+from .nim_service import NIMInferenceService
+from .config import settings
+import logging
 
-# Load configuration
-with open("config/config.yaml", "r") as f:
-    config = yaml.safe_load(f)
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-nim_client = NIMClient(config["nim_base_url"])
-model_deployer = ModelDeployer(nim_client)
-dynamic_batcher = DynamicBatcher(config["max_batch_size"], config["max_latency"])
-monitoring = Monitoring()
-auto_scaler = AutoScaler()
+# Initialize FastAPI app
+app = FastAPI(
+    title="NIM Inference Service",
+    description="High-performance inference service using NVIDIA Inference Microservices",
+    version="1.0.0"
+)
 
-class DeployRequest(BaseModel):
-    model_name: str
-    model_path: str
-    num_gpus: int = 1
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize inference service
+inference_service = NIMInferenceService()
 
 class InferenceRequest(BaseModel):
-    model_name: str
-    input_text: str
+    texts: List[str] = Field(..., min_items=1, max_items=1000)
+    batch_size: Optional[int] = Field(None, gt=0, le=64)
 
-async def update_metrics_periodically():
-    while True:
-        monitoring.collect_metrics()
-        await asyncio.sleep(60)  # Update metrics every 60 seconds
+class HealthResponse(BaseModel):
+    status: str
+    stats: dict
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Startup
-    asyncio.create_task(update_metrics_periodically())
-    yield
-    # Shutdown
-    # Add any cleanup code here if needed
-
-app = FastAPI(lifespan=lifespan)
-
-@app.post("/deploy")
-async def deploy_model(request: DeployRequest):
-    try:
-        result = await model_deployer.prepare_and_deploy_model(request.model_name, request.model_path)
-        if request.num_gpus > 1:
-            # Initialize model parallelism
-            ModelParallelNIMWrapper(nim_client, request.model_name, request.num_gpus)
-        return {"message": "Model deployed successfully", "result": result}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    class Config:
+        protected_namespaces = ()
 
 @app.post("/inference")
-async def inference(request: InferenceRequest):
+async def perform_inference(request: InferenceRequest, background_tasks: BackgroundTasks):
     try:
-        monitoring.record_inference_request()
-        
-        @monitoring.measure_request_time
-        async def process_inference():
-            tokenized_input = {"input_ids": [1, 2, 3], "attention_mask": [1, 1, 1]}  # Mocked tokenization
-            batch = await dynamic_batcher.add_request(tokenized_input)
-            if batch:
-                monitoring.update_batch_size(len(batch))
-                start_time = time.time()
-                results = await batch_inference(nim_client, request.model_name, batch)
-                latency = time.time() - start_time
-                monitoring.record_model_latency(latency)
-                return results[0]  # Return the result for this specific request
-            return None
-
-        result = await process_inference()
-        if result is None:
-            return {"message": "Request added to batch, please try again later"}
-        return {"result": result}
+        if request.batch_size:
+            inference_service.batch_size = min(request.batch_size, 64)
+            
+        results = inference_service.inference(request.texts)
+        return {"status": "success", "results": results}
     except Exception as e:
+        logger.error(f"Inference error: {str(e)}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/undeploy/{model_name}")
-async def undeploy_model(model_name: str):
+@app.get("/health")
+async def health_check():
     try:
-        result = await model_deployer.undeploy_model(model_name)
-        return {"message": "Model undeployed successfully", "result": result}
+        stats = inference_service.get_health_stats()
+        return HealthResponse(status="healthy", stats=stats)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Health check error: {str(e)}", exc_info=True)
+        return HealthResponse(status="unhealthy", stats={"error": str(e)})
 
 @app.get("/metrics")
-async def get_metrics():
-    monitoring.collect_metrics()
-    return {"message": "Metrics updated"}
+async def metrics():
+    return {"message": f"Metrics available at http://localhost:{settings.METRICS_PORT}"}
 
-@app.post("/scale")
-async def scale_deployment(name: str, namespace: str, replicas: int):
+def start_metrics_server():
     try:
-        auto_scaler.scale_deployment(name, namespace, replicas)
-        return {"message": f"Scaled deployment {name} to {replicas} replicas"}
+        start_http_server(settings.METRICS_PORT)
+        logger.info(f"Metrics server started on port {settings.METRICS_PORT}")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Failed to start metrics server: {str(e)}")
+        raise
 
-@app.post("/update_hpa")
-async def update_hpa(name: str, namespace: str, min_replicas: int, max_replicas: int, target_cpu_utilization: int):
-    try:
-        auto_scaler.update_hpa(name, namespace, min_replicas, max_replicas, target_cpu_utilization)
-        return {"message": f"Updated HPA for deployment {name}"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+def run_metrics_server():
+    metrics_thread = threading.Thread(target=start_metrics_server, daemon=True)
+    metrics_thread.start()
 
 if __name__ == "__main__":
-    port = int(os.getenv("PORT", 8080))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # Start metrics server in a separate thread
+    run_metrics_server()
+    
+    # Start FastAPI server
+    uvicorn.run(
+        app,
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=False  # Disable reload in production
+    )
