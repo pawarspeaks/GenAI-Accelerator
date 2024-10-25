@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GenAI Accelerator Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    .status-icon { display: inline-block; margin-right: 8px; }
+    .status-loading { color: blue; }
+    .status-ready { color: green; }
+    .status-error { color: red; }
+    textarea, button {
+      width: 100%;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>GenAI Accelerator Dashboard</h1>
+  <div id="status">
+    <span class="status-icon" id="statusIcon">🔄</span>
+    <span>Status: Loading...</span>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <h2>Inference Testing</h2>
+    <textarea id="inferenceInput" rows="4" placeholder="Enter text for inference..."></textarea>
+    <button onclick="handleInference()">Run Inference</button>
+    <pre id="inferenceResult" style="background-color: #f0f0f0; padding: 10px;"></pre>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <h2>Latency (ms)</h2>
+    <canvas id="latencyChart"></canvas>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <h2>Throughput (req/s)</h2>
+    <canvas id="throughputChart"></canvas>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <h2>GPU Memory Usage (MB)</h2>
+    <canvas id="gpuMemoryChart"></canvas>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <h2>Batch Size Distribution</h2>
+    <canvas id="batchSizeChart"></canvas>
+  </div>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const statusIcon = document.getElementById('statusIcon');
+    const inferenceResultEl = document.getElementById('inferenceResult');
+    let metrics = { latency: [], throughput: [], gpuMemory: [], batchSizes: [] };
+
+    function updateStatus(status) {
+      statusIcon.textContent = status === 'loading' ? '🔄' : status === 'ready' ? '✅' : '❌';
+      statusEl.querySelector('span:last-child').textContent = `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+    }
+
+    function handleInference() {
+      const input = document.getElementById('inferenceInput').value;
+      fetch('http://localhost:8000/inference', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texts: [input] })
+      })
+      .then(response => response.json())
+      .then(result => {
+        inferenceResultEl.textContent = JSON.stringify(result, null, 2);
+      })
+      .catch(() => {
+        inferenceResultEl.textContent = 'Failed to process inference request';
+      });
+    }
+
+    function fetchMetrics() {
+      fetch('http://localhost:8001/metrics')
+        .then(response => response.json())
+        .then(data => {
+          metrics.latency.push(data.latency);
+          metrics.throughput.push(data.throughput);
+          metrics.gpuMemory.push(data.gpu_memory);
+          metrics.batchSizes.push(data.batch_size);
+          if (metrics.latency.length > 20) metrics.latency.shift();
+          if (metrics.throughput.length > 20) metrics.throughput.shift();
+          if (metrics.gpuMemory.length > 20) metrics.gpuMemory.shift();
+          if (metrics.batchSizes.length > 20) metrics.batchSizes.shift();
+          updateCharts();
+          updateStatus('ready');
+        })
+        .catch(() => updateStatus('error'));
+    }
+
+    function updateCharts() {
+      latencyChart.data.labels = Array(metrics.latency.length).fill('');
+      latencyChart.data.datasets[0].data = metrics.latency;
+      latencyChart.update();
+
+      throughputChart.data.labels = Array(metrics.throughput.length).fill('');
+      throughputChart.data.datasets[0].data = metrics.throughput;
+      throughputChart.update();
+
+      gpuMemoryChart.data.labels = Array(metrics.gpuMemory.length).fill('');
+      gpuMemoryChart.data.datasets[0].data = metrics.gpuMemory;
+      gpuMemoryChart.update();
+
+      batchSizeChart.data.labels = Array(metrics.batchSizes.length).fill('');
+      batchSizeChart.data.datasets[0].data = metrics.batchSizes;
+      batchSizeChart.update();
+    }
+
+    const latencyChart = new Chart(document.getElementById('latencyChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Latency', data: [], borderColor: 'blue' }] },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    const throughputChart = new Chart(document.getElementById('throughputChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Throughput', data: [], borderColor: 'green' }] },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    const gpuMemoryChart = new Chart(document.getElementById('gpuMemoryChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'GPU Memory Usage', data: [], borderColor: 'purple' }] },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    const batchSizeChart = new Chart(document.getElementById('batchSizeChart'), {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Batch Size', data: [], borderColor: 'pink' }] },
+      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+    });
+
+    setInterval(fetchMetrics, 1000);
+  </script>
+</body>
+</html>
