@@ -1,3 +1,4 @@
+# src/nim_service.py
 import torch
 from transformers import AutoTokenizer, AutoModel
 import numpy as np

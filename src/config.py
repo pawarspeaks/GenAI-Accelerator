@@ -1,3 +1,4 @@
+# src/confih.py
 from typing import Optional
 from pydantic_settings import BaseSettings
 
@@ -8,7 +9,7 @@ class Settings(BaseSettings):
     MAX_SEQUENCE_LENGTH: int = 512
     DEVICE: str =  "cpu"
     FALLBACK_TO_CPU: bool = True
-    HOST: str = "0.0.0.0"
+    HOST: str = "0.0.0.0"   
     PORT: int = 8000
     METRICS_PORT: int = 8001
     ENABLE_FP16: bool = False

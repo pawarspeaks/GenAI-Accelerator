@@ -1,3 +1,4 @@
+#scripts/convert_to_trt.py
 import torch
 from transformers import AutoTokenizer, AutoModel
 import os

@@ -13,7 +13,7 @@ def test_inference():
         inference_response = requests.post(
             "http://localhost:8000/inference",
             json={
-                "texts": ["This is a test sentence.", "Another test sentence."]
+                "texts": ["Hey LLM!", "How can you assist me?"]
             }
         )
         logger.info("Inference Response:")
