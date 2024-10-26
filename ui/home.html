@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -466,7 +466,474 @@ function updateCharts(metricsText) {
     }
 
     // Start polling
-    setInterval(fetchUpdates, 1000);
+    setInterval(fetchUpdates, 1500);
+  </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GenAI Accelerator Dashboard</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      height: 100vh;
+      overflow: hidden;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e6e6e6;
+    }
+
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 35% 65%;
+      height: 100vh;
+      padding: 20px;
+      gap: 20px;
+    }
+
+    .control-section {
+      background: linear-gradient(145deg, rgba(88, 24, 69, 0.3), rgba(144, 12, 63, 0.2));
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .health-info {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+
+    .health-info h3 {
+      color: #ff9bb3;
+      margin-bottom: 10px;
+    }
+
+    .health-info dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+    }
+
+    .health-info dt {
+      color: #ff6b9b;
+      font-weight: 600;
+    }
+
+    .health-info dd {
+      color: #e6e6e6;
+      margin-left: 15px;
+    }
+
+    .metrics-summary {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+      margin: 15px 0;
+    }
+
+    .metric-card {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #ff9bb3;
+    }
+
+    .metric-label {
+      color: #e6e6e6;
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    .charts-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 20px;
+      background: linear-gradient(145deg, rgba(23, 32, 42, 0.3), rgba(44, 62, 80, 0.2));
+      padding: 20px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    .chart-container {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.3s ease;
+    }
+
+    .chart-container:hover {
+      transform: translateY(-5px);
+    }
+
+    .status-icon {
+      display: inline-block;
+      margin-right: 8px;
+      font-size: 1.2em;
+    }
+
+    textarea {
+      width: 100%;
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
+      resize: none;
+      height: 100px;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #ff6b9b;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 15px;
+      padding: 12px;
+      background: linear-gradient(45deg, #ff6b9b, #ff3366);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 107, 155, 0.3);
+    }
+
+    #inferenceResult {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 14px;
+      font-family: 'Consolas', monospace;
+      color: #ff9bb3;
+      white-space: pre-wrap;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      background: linear-gradient(45deg, #ff6b9b, #ff3366);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 700;
+    }
+
+    .chart-container h2 {
+      color: #ff9bb3;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-container">
+    <div class="control-section">
+      <h1>GenAI Accelerator Playground</h1>
+      <div id="status">
+        <span class="status-icon" id="statusIcon">🔄</span>
+        <span>Status: Loading...</span>
+      </div>
+
+      <div class="health-info" id="healthInfo">
+        <h3>System Health</h3>
+        <dl>
+          <dt>Model Name:</dt>
+          <dd>Loading...</dd>
+          <dt>Device:</dt>
+          <dd>Loading...</dd>
+          <dt>Batch Size:</dt>
+          <dd>Loading...</dd>
+          <dt>FP16 Enabled:</dt>
+          <dd>Loading...</dd>
+          <dt>GPU:</dt>
+          <dd>Loading...</dd>
+        </dl>
+      </div>
+
+      <!-- New metrics summary section -->
+      <div class="metrics-summary">
+        <div class="metric-card">
+          <div class="metric-value" id="totalRequests">0</div>
+          <div class="metric-label">Total Requests</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="tokensProcessed">0</div>
+          <div class="metric-label">Tokens Processed</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="avgInferenceTime">0</div>
+          <div class="metric-label">Avg Inference Time (ms)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" id="avgLatency">0</div>
+          <div class="metric-label">Avg Latency (ms)</div>
+        </div>
+      </div>
+
+      <div class="inference-section">
+        <h2>Inference Testing</h2>
+        <textarea id="inferenceInput" placeholder="Enter text for inference..."></textarea>
+        <button onclick="handleInference()">Run Inference</button>
+        <pre id="inferenceResult"></pre>
+      </div>
+    </div>
+
+    <div class="charts-section">
+      <div class="chart-container">
+        <h2>Request Latency (ms)</h2>
+        <canvas id="latencyChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h2>Tokens Processed</h2>
+        <canvas id="tokensChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h2>Average Inference Time (ms)</h2>
+        <canvas id="inferenceTimeChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h2>Model Utilization (%)</h2>
+        <canvas id="utilizationChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize chart variables
+    const latencyCtx = document.getElementById('latencyChart').getContext('2d');
+    const tokensCtx = document.getElementById('tokensChart').getContext('2d');
+    const inferenceTimeCtx = document.getElementById('inferenceTimeChart').getContext('2d');
+    const utilizationCtx = document.getElementById('utilizationChart').getContext('2d');
+
+    // Chart data
+    let latencyData = [];
+    let tokensData = [];
+    let inferenceTimeData = [];
+    let utilizationData = [];
+
+    // Create charts
+    const latencyChart = new Chart(latencyCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Latency (ms)',
+          data: latencyData,
+          borderColor: 'rgba(255, 107, 155, 1)',
+          borderWidth: 2,
+          fill: false,
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Request Number' } },
+          y: { title: { display: true, text: 'Latency (ms)' } }
+        }
+      }
+    });
+
+    const tokensChart = new Chart(tokensCtx, {
+      type: 'bar',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Tokens Processed',
+          data: tokensData,
+          backgroundColor: 'rgba(255, 107, 155, 0.5)',
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Request Number' } },
+          y: { title: { display: true, text: 'Tokens' } }
+        }
+      }
+    });
+
+    const inferenceTimeChart = new Chart(inferenceTimeCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Avg Inference Time (ms)',
+          data: inferenceTimeData,
+          borderColor: 'rgba(255, 107, 155, 1)',
+          borderWidth: 2,
+          fill: false,
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Request Number' } },
+          y: { title: { display: true, text: 'Avg Inference Time (ms)' } }
+        }
+      }
+    });
+
+    const utilizationChart = new Chart(utilizationCtx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Model Utilization (%)',
+          data: utilizationData,
+          borderColor: 'rgba(255, 107, 155, 1)',
+          borderWidth: 2,
+          fill: false,
+        }]
+      },
+      options: {
+        scales: {
+          x: { title: { display: true, text: 'Request Number' } },
+          y: { title: { display: true, text: 'Utilization (%)' } }
+        }
+      }
+    });
+
+    // Function to handle inference
+    async function handleInference() {
+      const inputText = document.getElementById('inferenceInput').value;
+      const resultElement = document.getElementById('inferenceResult');
+      
+      // Simulating inference call
+      resultElement.textContent = 'Processing...';
+      const startTime = performance.now();
+      
+      // Simulate API call here
+      const response = await simulateApiCall(inputText);
+      const endTime = performance.now();
+      
+      const latency = endTime - startTime;
+      const tokensProcessed = response.tokensProcessed; // Simulated value
+      const inferenceTime = response.inferenceTime; // Simulated value
+
+      // Update metrics
+      updateMetrics(latency, tokensProcessed, inferenceTime);
+      updateCharts(latency, tokensProcessed, inferenceTime);
+      
+      resultElement.textContent = response.result; // Display the result
+    }
+
+    // Simulated API call function
+    async function simulateApiCall(inputText) {
+      // Simulate processing delay
+      await new Promise(resolve => setTimeout(resolve, Math.random() * 2000));
+      
+      // Return simulated response
+      return {
+        result: `Inference result for: ${inputText}`,
+        tokensProcessed: Math.floor(Math.random() * 100) + 1,
+        inferenceTime: Math.floor(Math.random() * 100) + 1
+      };
+    }
+
+    // Update metrics display
+    function updateMetrics(latency, tokensProcessed, inferenceTime) {
+      document.getElementById('totalRequests').textContent = parseInt(document.getElementById('totalRequests').textContent) + 1;
+      document.getElementById('tokensProcessed').textContent = parseInt(document.getElementById('tokensProcessed').textContent) + tokensProcessed;
+      document.getElementById('avgInferenceTime').textContent = (parseInt(document.getElementById('avgInferenceTime').textContent) + inferenceTime / (parseInt(document.getElementById('totalRequests').textContent))).toFixed(2);
+      document.getElementById('avgLatency').textContent = (parseInt(document.getElementById('avgLatency').textContent) + latency / (parseInt(document.getElementById('totalRequests').textContent))).toFixed(2);
+    }
+
+    // Update charts with new data
+    function updateCharts(latency, tokensProcessed, inferenceTime) {
+      const requestNumber = latencyData.length + 1;
+      latencyData.push(latency);
+      tokensData.push(tokensProcessed);
+      inferenceTimeData.push(inferenceTime);
+      utilizationData.push(Math.floor(Math.random() * 100)); // Simulate utilization
+      
+      latencyChart.data.labels.push(requestNumber);
+      tokensChart.data.labels.push(requestNumber);
+      inferenceTimeChart.data.labels.push(requestNumber);
+      utilizationChart.data.labels.push(requestNumber);
+
+      latencyChart.update();
+      tokensChart.update();
+      inferenceTimeChart.update();
+      utilizationChart.update();
+    }
+
+    // Update health info dynamically
+    function updateHealthInfo() {
+      document.getElementById('statusIcon').textContent = '✅';
+      document.getElementById('healthInfo').innerHTML = `
+        <h3>System Health</h3>
+        <dl>
+          <dt>Model Name:</dt>
+          <dd>MyGenAIModel</dd>
+          <dt>Device:</dt>
+          <dd>GPU</dd>
+          <dt>Batch Size:</dt>
+          <dd>32</dd>
+          <dt>FP16 Enabled:</dt>
+          <dd>Yes</dd>
+          <dt>GPU:</dt>
+          <dd>NVIDIA RTX 3050 Ti</dd>
+        </dl>
+      `;
+    }
+
+    // Initial health update
+    updateHealthInfo();
   </script>
 </body>
 </html>
