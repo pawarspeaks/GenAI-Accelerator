@@ -16,3 +16,10 @@ tensorrt==10.5.0
 torchvision==0.14.1 
 torchaudio==0.13.1
 tokenizers==0.14.1
+Flask==2.2.2
+Flask-Cors==5.0.0
+prometheus-client
+gputil
+psutil
+nvidia-pyindex
+nvidia-tensorrt

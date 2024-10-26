@@ -13,27 +13,61 @@
     }
 
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', system-ui, sans-serif;
       height: 100vh;
       overflow: hidden;
-      background-color: #f5f5f5;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e6e6e6;
     }
 
     .dashboard-container {
       display: grid;
-      grid-template-columns: 30% 70%;  /* Modified to 30/70 split */
+      grid-template-columns: 35% 65%;
       height: 100vh;
       padding: 20px;
+      gap: 20px;
     }
 
     .control-section {
-      background: white;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: linear-gradient(145deg, rgba(88, 24, 69, 0.3), rgba(144, 12, 63, 0.2));
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
       flex-direction: column;
-      margin-right: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .health-info {
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+      font-size: 14px;
+    }
+
+    .health-info h3 {
+      color: #ff9bb3;
+      margin-bottom: 10px;
+    }
+
+    .health-info dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 8px;
+    }
+
+    .health-info dt {
+      color: #ff6b9b;
+      font-weight: 600;
+    }
+
+    .health-info dd {
+      color: #e6e6e6;
+      margin-left: 15px;
     }
 
     .charts-section {
@@ -41,106 +75,138 @@
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
       gap: 20px;
+      background: linear-gradient(145deg, rgba(23, 32, 42, 0.3), rgba(44, 62, 80, 0.2));
+      padding: 20px;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
     }
 
     .chart-container {
-      background: white;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
       display: flex;
       flex-direction: column;
+      transition: transform 0.3s ease;
     }
 
-    .chart-wrapper {
-      flex: 1;
-      position: relative;
+    .chart-container:hover {
+      transform: translateY(-5px);
     }
 
     .status-icon {
       display: inline-block;
       margin-right: 8px;
-    }
-
-    .status-loading {
-      color: blue;
-    }
-
-    .status-ready {
-      color: green;
-    }
-
-    .status-error {
-      color: red;
-    }
-
-    .inference-section {
-      margin-top: 20px;
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    textarea, button {
-      width: 100%;
-      margin-top: 10px;
+      font-size: 1.2em;
     }
 
     textarea {
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
+      width: 100%;
+      margin-top: 15px;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 1rem;
       resize: none;
-      flex: 1;
-      max-height: 120px;
+      height: 100px;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: #ff6b9b;
     }
 
     button {
-      padding: 10px;
-      background-color: #007bff;
+      width: 100%;
+      margin-top: 15px;
+      padding: 12px;
+      background: linear-gradient(45deg, #ff6b9b, #ff3366);
       color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 8px;
       cursor: pointer;
-      margin-bottom: 10px;
+      font-weight: 600;
+      font-size: 1rem;
+      transition: all 0.3s ease;
     }
 
     button:hover {
-      background-color: #0056b3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255, 107, 155, 0.3);
     }
 
     #inferenceResult {
-      background-color: #f8f9fa;
-      padding: 10px;
-      border-radius: 4px;
-      margin-top: 10px;
-      flex: 1;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+      max-height: 200px;
       overflow-y: auto;
       font-size: 14px;
-      font-family: monospace;
+      font-family: 'Consolas', monospace;
+      color: #ff9bb3;
+      white-space: pre-wrap;
     }
 
     h1 {
-      font-size: 1.5rem;
-      margin-bottom: 15px;
+      font-size: 2rem;
+      margin-bottom: 20px;
+      background: linear-gradient(45deg, #ff6b9b, #ff3366);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      font-weight: 700;
     }
 
-    h2 {
-      font-size: 1.1rem;
-      margin-bottom: 10px;
+    .chart-container h2 {
+      color: #ff9bb3;
+      margin-bottom: 15px;
+      font-size: 1.2rem;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
     }
   </style>
-
-
-
 </head>
 <body>
   <div class="dashboard-container">
     <div class="control-section">
-      <h1>GenAI Accelerator Dashboard</h1>
+      <h1>GenAI Accelerator Playground</h1>
       <div id="status">
         <span class="status-icon" id="statusIcon">🔄</span>
         <span>Status: Loading...</span>
+      </div>
+
+      <div class="health-info" id="healthInfo">
+        <h3>System Health</h3>
+        <dl>
+          <dt>Model Name:</dt>
+          <dd>Loading...</dd>
+          <dt>Device:</dt>
+          <dd>Loading...</dd>
+          <dt>Batch Size:</dt>
+          <dd>Loading...</dd>
+          <dt>FP16 Enabled:</dt>
+          <dd>Loading...</dd>
+          <dt>GPU:</dt>
+          <dd>Loading...</dd>
+        </dl>
       </div>
 
       <div class="inference-section">
@@ -153,31 +219,20 @@
 
     <div class="charts-section">
       <div class="chart-container">
-        <h2>Latency (ms)</h2>
-        <div class="chart-wrapper">
-          <canvas id="latencyChart"></canvas>
-        </div>
+        <h2>Request Latency (ms)</h2>
+        <canvas id="latencyChart"></canvas>
       </div>
-
-      <div class="chart-container">
-        <h2>Throughput (req/s)</h2>
-        <div class="chart-wrapper">
-          <canvas id="throughputChart"></canvas>
-        </div>
-      </div>
-
       <div class="chart-container">
         <h2>GPU Memory Usage (MB)</h2>
-        <div class="chart-wrapper">
-          <canvas id="gpuMemoryChart"></canvas>
-        </div>
+        <canvas id="gpuMemoryChart"></canvas>
       </div>
-
       <div class="chart-container">
-        <h2>Batch Size Distribution</h2>
-        <div class="chart-wrapper">
-          <canvas id="batchSizeChart"></canvas>
-        </div>
+        <h2>GPU Utilization (%)</h2>
+        <canvas id="gpuUtilizationChart"></canvas>
+      </div>
+      <div class="chart-container">
+        <h2>Queue Size</h2>
+        <canvas id="queueSizeChart"></canvas>
       </div>
     </div>
   </div>
@@ -186,103 +241,232 @@
     const statusEl = document.getElementById('status');
     const statusIcon = document.getElementById('statusIcon');
     const inferenceResultEl = document.getElementById('inferenceResult');
-    let metrics = { latency: [], throughput: [], gpuMemory: [], batchSizes: [] };
+    const healthInfoEl = document.getElementById('healthInfo');
+    
+  let metrics = {
+  latency: Array(20).fill(0),
+  gpuMemory: Array(20).fill(0),
+  gpuUtilization: Array(20).fill(0),
+  queueSize: Array(20).fill(0)
+  };
 
-    function updateStatus(status) {
-      statusIcon.textContent = status === 'loading' ? '🔄' : status === 'ready' ? '✅' : '❌';
-      statusEl.querySelector('span:last-child').textContent = `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
-    }
-
-    function handleInference() {
-      const input = document.getElementById('inferenceInput').value;
-      fetch('http://localhost:8000/inference', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ texts: [input] })
-      })
-      .then(response => response.json())
-      .then(result => {
-        inferenceResultEl.textContent = JSON.stringify(result, null, 2);
-      })
-      .catch(() => {
-        inferenceResultEl.textContent = 'Failed to process inference request';
-      });
-    }
-
-    function fetchMetrics() {
-      fetch('http://localhost:8001/metrics')
-        .then(response => response.json())
-        .then(data => {
-          metrics.latency.push(data.latency);
-          metrics.throughput.push(data.throughput);
-          metrics.gpuMemory.push(data.gpu_memory);
-          metrics.batchSizes.push(data.batch_size);
-          if (metrics.latency.length > 20) metrics.latency.shift();
-          if (metrics.throughput.length > 20) metrics.throughput.shift();
-          if (metrics.gpuMemory.length > 20) metrics.gpuMemory.shift();
-          if (metrics.batchSizes.length > 20) metrics.batchSizes.shift();
-          updateCharts();
-          updateStatus('ready');
-        })
-        .catch(() => updateStatus('error'));
-    }
-
-    function updateCharts() {
-      latencyChart.data.labels = Array(metrics.latency.length).fill('');
-      latencyChart.data.datasets[0].data = metrics.latency;
-      latencyChart.update();
-
-      throughputChart.data.labels = Array(metrics.throughput.length).fill('');
-      throughputChart.data.datasets[0].data = metrics.throughput;
-      throughputChart.update();
-
-      gpuMemoryChart.data.labels = Array(metrics.gpuMemory.length).fill('');
-      gpuMemoryChart.data.datasets[0].data = metrics.gpuMemory;
-      gpuMemoryChart.update();
-
-      batchSizeChart.data.labels = Array(metrics.batchSizes.length).fill('');
-      batchSizeChart.data.datasets[0].data = metrics.batchSizes;
-      batchSizeChart.update();
-    }
-
-    const chartOptions = {
-      responsive: true,
-      maintainAspectRatio: true,
-      scales: { 
-        y: { beginAtZero: true }
-      },
-      plugins: {
-        legend: {
-          display: false
+    const chartConfig = {
+      type: 'line',
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: {
+          duration: 0
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: {
+              color: 'rgba(255, 255, 255, 0.1)'
+            },
+            ticks: {
+              color: '#e6e6e6'
+            }
+          },
+          x: {
+            display: false
+          }
+        },
+        plugins: {
+          legend: {
+            display: false
+          }
         }
       }
     };
 
-    const latencyChart = new Chart(document.getElementById('latencyChart'), {
-      type: 'line',
-      data: { labels: [], datasets: [{ label: 'Latency', data: [], borderColor: 'blue', tension: 0.4 }] },
-      options: chartOptions
-    });
+    // Initialize charts
+    const charts = {
+      latency: new Chart(document.getElementById('latencyChart'), {
+        ...chartConfig,
+        data: {
+          labels: Array(20).fill(''),
+          datasets: [{
+            data: metrics.latency,
+            borderColor: '#ff6b9b',
+            tension: 0.4,
+            fill: false
+          }]
+        }
+      }),
+      gpuMemory: new Chart(document.getElementById('gpuMemoryChart'), {
+        ...chartConfig,
+        data: {
+          labels: Array(20).fill(''),
+          datasets: [{
+            data: metrics.gpuMemory,
+            borderColor: '#00ff7f',
+            tension: 0.4,
+            fill: false
+          }]
+        }
+      }),
+      gpuUtilization: new Chart(document.getElementById('gpuUtilizationChart'), {
+        ...chartConfig,
+        data: {
+          labels: Array(20).fill(''),
+          datasets: [{
+            data: metrics.gpuUtilization,
+            borderColor: '#00a8ff',
+            tension: 0.4,
+            fill: false
+          }]
+        }
+      }),
+      queueSize: new Chart(document.getElementById('queueSizeChart'), {
+        ...chartConfig,
+        data: {
+          labels: Array(20).fill(''),
+          datasets: [{
+            data: metrics.queueSize,
+            borderColor: '#ffd93d',
+            tension: 0.4,
+            fill: false
+          }]
+        }
+      })
+    };
 
-    const throughputChart = new Chart(document.getElementById('throughputChart'), {
-      type: 'line',
-      data: { labels: [], datasets: [{ label: 'Throughput', data: [], borderColor: 'green', tension: 0.4 }] },
-      options: chartOptions
-    });
+    function updateStatus(status) {
+      const icons = {
+        loading: '🔄',
+        healthy: '✅',
+        error: '❌'
+      };
+      statusIcon.textContent = icons[status] || icons.error;
+      statusEl.querySelector('span:last-child').textContent = `Status: ${status.charAt(0).toUpperCase() + status.slice(1)}`;
+    }
 
-    const gpuMemoryChart = new Chart(document.getElementById('gpuMemoryChart'), {
-      type: 'line',
-      data: { labels: [], datasets: [{ label: 'GPU Memory Usage', data: [], borderColor: 'purple', tension: 0.4 }] },
-      options: chartOptions
-    });
+    function updateHealth(data) {
+      const healthData = {
+        'Model Name:': data.stats.model_name,
+        'Device:': data.stats.device,
+        'Batch Size:': data.stats.batch_size,
+        'FP16 Enabled:': data.stats.fp16_enabled ? 'Yes' : 'No',
+        'GPU:': data.stats.gpu_name
+      };
 
-    const batchSizeChart = new Chart(document.getElementById('batchSizeChart'), {
-      type: 'line',
-      data: { labels: [], datasets: [{ label: 'Batch Size', data: [], borderColor: 'pink', tension: 0.4 }] },
-      options: chartOptions
-    });
+      const dl = healthInfoEl.querySelector('dl');
+      dl.innerHTML = Object.entries(healthData)
+        .map(([key, value]) => `<dt>${key}</dt><dd>${value}</dd>`)
+        .join('');
+    }
 
-    setInterval(fetchMetrics, 1000);
+    function pushMetric(array, value) {
+  array.push(value);
+  if (array.length > 20) array.shift();
+  return array;
+  }
+
+    function parseBucketMetric(metrics, metricName) {
+      const lines = metrics.split('\n');
+      let sum = 0;
+      let count = 0;
+      
+      for (const line of lines) {
+        if (line.includes(`${metricName}_sum`)) {
+          sum = parseFloat(line.split(' ')[1]);
+        } else if (line.includes(`${metricName}_count`)) {
+          count = parseFloat(line.split(' ')[1]);
+        }
+      }
+      
+      return count > 0 ? (sum / count) : 0;
+    }
+    
+    function parsePrometheusValue(metrics, metricName) {
+  const lines = metrics.split('\n');
+  for (const line of lines) {
+    if (line.startsWith(metricName + ' ')) {
+      const value = parseFloat(line.split(' ')[1]);
+      return isNaN(value) ? 0 : value;
+    }
+  }
+  return 0;
+}
+
+function parseHistogramMetric(metrics, metricName) {
+  const lines = metrics.split('\n');
+  let sum = 0;
+  let count = 0;
+  
+  for (const line of lines) {
+    if (line.startsWith(`${metricName}_sum `)) {
+      sum = parseFloat(line.split(' ')[1]);
+    } else if (line.startsWith(`${metricName}_count `)) {
+      count = parseFloat(line.split(' ')[1]);
+    }
+  }
+  
+  return count > 0 ? (sum / count) : 0;
+}
+
+function updateCharts(metricsText) {
+  // Parse request latency from histogram metric (convert to milliseconds)
+  const latencyValue = parseHistogramMetric(metricsText, 'request_latency_seconds') * 1000;
+
+  // Parse GPU memory (convert bytes to MB)
+  const gpuMemoryValue = parsePrometheusValue(metricsText, 'gpu_memory_used_bytes') / (1024 * 1024);
+
+  // Parse GPU utilization
+  const gpuUtilizationValue = parsePrometheusValue(metricsText, 'gpu_utilization_percent');
+
+  // Parse queue size
+  const queueSizeValue = parsePrometheusValue(metricsText, 'inference_queue_size');
+
+  // Update metrics arrays
+  metrics.latency = pushMetric(metrics.latency, latencyValue);
+  metrics.gpuMemory = pushMetric(metrics.gpuMemory, gpuMemoryValue);
+  metrics.gpuUtilization = pushMetric(metrics.gpuUtilization, gpuUtilizationValue);
+  metrics.queueSize = pushMetric(metrics.queueSize, queueSizeValue);
+
+  // Update all charts
+  Object.entries(charts).forEach(([key, chart]) => {
+    chart.data.datasets[0].data = [...metrics[key]];
+    chart.update('none'); // Update without animation for better performance
+  });
+}
+
+    async function handleInference() {
+      const input = document.getElementById('inferenceInput').value;
+      try {
+        const response = await fetch('http://localhost:8000/inference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ texts: [input] })
+        });
+        const result = await response.json();
+        inferenceResultEl.textContent = JSON.stringify(result, null, 2);
+      } catch (error) {
+        inferenceResultEl.textContent = 'Error: Failed to process inference request';
+      }
+    }
+
+    async function fetchUpdates() {
+      try {
+        // Fetch health status
+        const healthResponse = await fetch('http://localhost:8000/health');
+        const healthData = await healthResponse.json();
+        updateStatus(healthData.status);
+        updateHealth(healthData);
+
+        // Fetch metrics
+        const metricsResponse = await fetch('http://localhost:8000/metrics');
+        const metricsText = await metricsResponse.text();
+        updateCharts(metricsText);
+      } catch (error) {
+        console.error('Error fetching updates:', error);
+        updateStatus('error');
+      }
+    }
+
+    // Start polling
+    setInterval(fetchUpdates, 1000);
   </script>
 </body>
 </html>

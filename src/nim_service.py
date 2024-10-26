@@ -211,3 +211,4 @@ class NIMInferenceService:
             })
 
         return stats
+    

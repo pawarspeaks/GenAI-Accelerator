@@ -33,7 +33,7 @@ def test_metrics():
         time.sleep(2)
         
         # Test metrics endpoint
-        metrics_response = requests.get("http://localhost:8001/metrics")
+        metrics_response = requests.get("http://localhost:8000/metrics")
         
         # Check for successful response
         if metrics_response.status_code == 200:
