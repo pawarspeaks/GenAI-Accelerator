@@ -1,22 +1,89 @@
 # src/triton_client.py
 import tritonclient.http as triton_http
 from tritonclient.utils import InferenceServerException
-from typing import List  # Import List from the typing module
+import torch
+from transformers import AutoModel, AutoTokenizer
+from typing import List, Dict
 
 class TritonClient:
-    def __init__(self, url="localhost:8000"):
-        self.client = triton_http.InferenceServerClient(url)
+    def __init__(self, model_name: str, device: str = "cpu", triton_url="localhost:8000"):
+        """
+        Initialize TritonClient for both CPU and GPU inference.
         
-    def infer(self, model_name: str, inputs: List[triton_http.InferInput]):
-        """Perform inference on a specified model with the provided inputs."""
-        try:
-            response = self.client.infer(model_name, inputs)
-            return response
-        except InferenceServerException as e:
-            print(f"Error during inference: {e}")
-            raise
+        Args:
+            model_name (str): The model name for loading.
+            device (str): "cpu" or "cuda" based on desired inference device.
+            triton_url (str): URL of the Triton inference server.
+        """
+        self.device = device
+        self.model_name = model_name
+        
+        # Initialize Triton client for GPU
+        if device == "cuda":
+            self.client = triton_http.InferenceServerClient(url=triton_url)
+        else:
+            # For CPU, load model locally
+            self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+            self.model = AutoModel.from_pretrained(model_name).to(device)
+            self.model.eval()
 
+    def infer(self, texts: List[str]) -> List[Dict]:
+        """
+        Perform inference on the model with given texts.
+        
+        Args:
+            texts (List[str]): List of input texts to process.
+        
+        Returns:
+            List[Dict]: List of inference results with embeddings.
+        """
+        if self.device == "cuda":
+            # GPU Inference via Triton
+            inputs = self.preprocess_for_triton(texts)
+            try:
+                response = self.client.infer(self.model_name, inputs)
+                embeddings = response.as_numpy("output")  # Ensure this matches your model's output tensor name
+                return [{"text": text, "embedding": embedding.tolist()} for text, embedding in zip(texts, embeddings)]
+            except InferenceServerException as e:
+                print(f"Error during inference: {e}")
+                raise
 
+        else:
+            # CPU Inference via PyTorch
+            encodings = self.tokenizer(
+                texts, padding=True, truncation=True, return_tensors="pt", max_length=512
+            ).to(self.device)
+            
+            with torch.inference_mode():
+                outputs = self.model(**encodings)
+                embeddings = outputs.last_hidden_state.mean(dim=1).cpu().numpy()  # Taking mean of hidden states
+            
+            return [{"text": text, "embedding": embedding.tolist()} for text, embedding in zip(texts, embeddings)]
+
+    def preprocess_for_triton(self, texts: List[str]) -> List[triton_http.InferInput]:
+        """
+        Preprocess texts into Triton InferInput format for GPU inference.
+        
+        Args:
+            texts (List[str]): List of input texts to process.
+        
+        Returns:
+            List[triton_http.InferInput]: List of Triton InferInput objects.
+        """
+        # Tokenize using the tokenizer
+        encodings = self.tokenizer(
+            texts, padding=True, truncation=True, return_tensors="pt", max_length=512
+        )
+
+        # Convert each input to Triton InferInput
+        triton_inputs = []
+        for name, tensor in encodings.items():
+            # Adjust data type as needed, make sure it matches your Triton model's input format
+            infer_input = triton_http.InferInput(name, tensor.shape, "INT32")  # Assuming input is INT32, adjust if needed
+            infer_input.set_data_from_numpy(tensor.numpy())
+            triton_inputs.append(infer_input)
+        
+        return triton_inputs
 
 # import tritonclient.http as triton_http
 # from tritonclient.utils import InferenceServerException

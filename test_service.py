@@ -16,8 +16,13 @@ def test_inference():
                 "texts": ["Hey LLM!", "How can you assist me?"]
             }
         )
-        logger.info("Inference Response:")
-        logger.info(json.dumps(inference_response.json(), indent=2))
+        
+        # Check for successful response
+        if inference_response.status_code == 200:
+            logger.info("Inference Response:")
+            logger.info(json.dumps(inference_response.json(), indent=2))
+        else:
+            logger.error(f"Inference failed with status code {inference_response.status_code}: {inference_response.text}")
         
     except Exception as e:
         logger.error(f"Error testing inference: {str(e)}")
@@ -29,8 +34,13 @@ def test_metrics():
         
         # Test metrics endpoint
         metrics_response = requests.get("http://localhost:8001/metrics")
-        logger.info("Metrics Response:")
-        logger.info(metrics_response.text)
+        
+        # Check for successful response
+        if metrics_response.status_code == 200:
+            logger.info("Metrics Response:")
+            logger.info(metrics_response.text)
+        else:
+            logger.error(f"Metrics request failed with status code {metrics_response.status_code}: {metrics_response.text}")
         
     except Exception as e:
         logger.error(f"Error testing metrics: {str(e)}")
@@ -39,8 +49,13 @@ def test_health():
     try:
         # Test health endpoint
         health_response = requests.get("http://localhost:8000/health")
-        logger.info("Health Response:")
-        logger.info(json.dumps(health_response.json(), indent=2))
+        
+        # Check for successful response
+        if health_response.status_code == 200:
+            logger.info("Health Response:")
+            logger.info(json.dumps(health_response.json(), indent=2))
+        else:
+            logger.error(f"Health check failed with status code {health_response.status_code}: {health_response.text}")
         
     except Exception as e:
         logger.error(f"Error testing health: {str(e)}")
