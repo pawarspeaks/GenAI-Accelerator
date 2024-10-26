@@ -119,7 +119,7 @@ class NIMInferenceService:
         if self.device.type == "cuda":
             return {k: v.to(self.device) for k, v in encodings.items()}
         return encodings
-
+    
     @torch.inference_mode()
     def inference(self, texts: List[str]) -> List[Dict]:
         """Run inference on the provided texts and return embeddings."""
@@ -133,39 +133,58 @@ class NIMInferenceService:
             # Preprocess batch
             inputs = self.preprocess_batch(batch_texts)
 
-            if self.device.type == "cpu":
-                outputs = self.model(**inputs)
-                embeddings = outputs.last_hidden_state.detach().cpu().numpy()  # Ensure it's moved to CPU
-            else:
-                # Use Triton/TensorRT for GPU inference
-                outputs = self.triton_client.infer(batch_texts)
-                self.logger.info(f"Outputs received: {outputs}")  # Log the raw output
-
-                # Ensure outputs are converted to a NumPy array safely
-                if isinstance(outputs, list) and len(outputs) > 0:
-                    if isinstance(outputs[0], np.ndarray):
-                        embeddings = np.mean(np.array(outputs), axis=1)  # Average across the first axis
-                    elif isinstance(outputs, dict) and 'embeddings' in outputs:
-                        embeddings = np.array(outputs['embeddings'])  # Extract embeddings
+            try:
+                if self.device.type == "cpu":
+                    outputs = self.model(**inputs)
+                    embeddings = outputs.last_hidden_state.mean(dim=1).detach().cpu().numpy()
+                else:
+                    # GPU inference with Triton
+                    outputs = self.triton_client.infer(batch_texts)
+                    
+                    # Handle different output formats
+                    if isinstance(outputs, list):
+                        # If outputs is already a list of dictionaries with text and embedding
+                        if all(isinstance(out, dict) and 'text' in out and 'embedding' in out for out in outputs):
+                            results.extend(outputs)
+                            continue
+                        # If outputs is a list of numpy arrays
+                        elif all(isinstance(out, np.ndarray) for out in outputs):
+                            embeddings = np.stack(outputs)
+                        else:
+                            self.logger.error(f"Unexpected output format: {outputs}")
+                            raise ValueError(f"Unexpected output format: {outputs}")
+                    elif isinstance(outputs, np.ndarray):
+                        embeddings = outputs
+                    elif isinstance(outputs, dict):
+                        if 'embeddings' in outputs:
+                            embeddings = outputs['embeddings']
+                        else:
+                            self.logger.error(f"Output dict missing embeddings key: {outputs}")
+                            raise ValueError(f"Output dict missing embeddings key: {outputs}")
                     else:
-                        raise ValueError(f"Unexpected output format: {outputs}")
-                else:
-                    raise ValueError("Received empty or invalid outputs from Triton.")
+                        self.logger.error(f"Unexpected output type: {type(outputs)}")
+                        raise ValueError(f"Unexpected output type: {type(outputs)}")
 
-                # Log the shape of embeddings
-                self.logger.info(f"Embeddings shape: {embeddings.shape}")
+                # Process embeddings and create results
+                for j, text in enumerate(batch_texts):
+                    if j < len(embeddings):
+                        # Ensure embedding is a flat array
+                        embedding = embeddings[j]
+                        if embedding.ndim > 1:
+                            embedding = np.mean(embedding, axis=0)
+                        
+                        results.append({
+                            "text": text,
+                            "embedding": embedding.tolist()
+                        })
+                    else:
+                        self.logger.warning(f"Embedding index {j} out of bounds for batch size {len(embeddings)}")
 
-            # Append results safely
-            for j, text in enumerate(batch_texts):
-                if j < len(embeddings):
-                    results.append({
-                        "text": text,
-                        "embedding": embeddings[j].tolist()  # Convert numpy array to list
-                    })
-                else:
-                    self.logger.warning(f"Embedding index {j} out of bounds for batch size {len(embeddings)}")
+            except Exception as e:
+                self.logger.error(f"Error processing batch: {str(e)}", exc_info=True)
+                raise
 
-            # Update metrics for GPU usage
+            # GPU metrics tracking
             if self.device.type == "cuda":
                 memory_used = torch.cuda.memory_allocated()
                 utilization = torch.cuda.utilization()

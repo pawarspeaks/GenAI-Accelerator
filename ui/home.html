@@ -6,55 +6,180 @@
   <title>GenAI Accelerator Dashboard</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: auto;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #f5f5f5;
+    }
+
+    .dashboard-container {
+      display: grid;
+      grid-template-columns: 30% 70%;  /* Modified to 30/70 split */
+      height: 100vh;
       padding: 20px;
     }
-    .status-icon { display: inline-block; margin-right: 8px; }
-    .status-loading { color: blue; }
-    .status-ready { color: green; }
-    .status-error { color: red; }
+
+    .control-section {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      margin-right: 20px;
+    }
+
+    .charts-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .chart-container {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-wrapper {
+      flex: 1;
+      position: relative;
+    }
+
+    .status-icon {
+      display: inline-block;
+      margin-right: 8px;
+    }
+
+    .status-loading {
+      color: blue;
+    }
+
+    .status-ready {
+      color: green;
+    }
+
+    .status-error {
+      color: red;
+    }
+
+    .inference-section {
+      margin-top: 20px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+
     textarea, button {
       width: 100%;
       margin-top: 10px;
     }
+
+    textarea {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      resize: none;
+      flex: 1;
+      max-height: 120px;
+    }
+
+    button {
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-bottom: 10px;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    #inferenceResult {
+      background-color: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+      flex: 1;
+      overflow-y: auto;
+      font-size: 14px;
+      font-family: monospace;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 15px;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      margin-bottom: 10px;
+    }
   </style>
+
+
+
 </head>
 <body>
+  <div class="dashboard-container">
+    <div class="control-section">
+      <h1>GenAI Accelerator Dashboard</h1>
+      <div id="status">
+        <span class="status-icon" id="statusIcon">🔄</span>
+        <span>Status: Loading...</span>
+      </div>
 
-  <h1>GenAI Accelerator Dashboard</h1>
-  <div id="status">
-    <span class="status-icon" id="statusIcon">🔄</span>
-    <span>Status: Loading...</span>
-  </div>
+      <div class="inference-section">
+        <h2>Inference Testing</h2>
+        <textarea id="inferenceInput" placeholder="Enter text for inference..."></textarea>
+        <button onclick="handleInference()">Run Inference</button>
+        <pre id="inferenceResult"></pre>
+      </div>
+    </div>
 
-  <div style="margin-top: 20px;">
-    <h2>Inference Testing</h2>
-    <textarea id="inferenceInput" rows="4" placeholder="Enter text for inference..."></textarea>
-    <button onclick="handleInference()">Run Inference</button>
-    <pre id="inferenceResult" style="background-color: #f0f0f0; padding: 10px;"></pre>
-  </div>
+    <div class="charts-section">
+      <div class="chart-container">
+        <h2>Latency (ms)</h2>
+        <div class="chart-wrapper">
+          <canvas id="latencyChart"></canvas>
+        </div>
+      </div>
 
-  <div style="margin-top: 20px;">
-    <h2>Latency (ms)</h2>
-    <canvas id="latencyChart"></canvas>
-  </div>
+      <div class="chart-container">
+        <h2>Throughput (req/s)</h2>
+        <div class="chart-wrapper">
+          <canvas id="throughputChart"></canvas>
+        </div>
+      </div>
 
-  <div style="margin-top: 20px;">
-    <h2>Throughput (req/s)</h2>
-    <canvas id="throughputChart"></canvas>
-  </div>
+      <div class="chart-container">
+        <h2>GPU Memory Usage (MB)</h2>
+        <div class="chart-wrapper">
+          <canvas id="gpuMemoryChart"></canvas>
+        </div>
+      </div>
 
-  <div style="margin-top: 20px;">
-    <h2>GPU Memory Usage (MB)</h2>
-    <canvas id="gpuMemoryChart"></canvas>
-  </div>
-
-  <div style="margin-top: 20px;">
-    <h2>Batch Size Distribution</h2>
-    <canvas id="batchSizeChart"></canvas>
+      <div class="chart-container">
+        <h2>Batch Size Distribution</h2>
+        <div class="chart-wrapper">
+          <canvas id="batchSizeChart"></canvas>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -120,28 +245,41 @@
       batchSizeChart.update();
     }
 
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: true,
+      scales: { 
+        y: { beginAtZero: true }
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    };
+
     const latencyChart = new Chart(document.getElementById('latencyChart'), {
       type: 'line',
-      data: { labels: [], datasets: [{ label: 'Latency', data: [], borderColor: 'blue' }] },
-      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      data: { labels: [], datasets: [{ label: 'Latency', data: [], borderColor: 'blue', tension: 0.4 }] },
+      options: chartOptions
     });
 
     const throughputChart = new Chart(document.getElementById('throughputChart'), {
       type: 'line',
-      data: { labels: [], datasets: [{ label: 'Throughput', data: [], borderColor: 'green' }] },
-      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      data: { labels: [], datasets: [{ label: 'Throughput', data: [], borderColor: 'green', tension: 0.4 }] },
+      options: chartOptions
     });
 
     const gpuMemoryChart = new Chart(document.getElementById('gpuMemoryChart'), {
       type: 'line',
-      data: { labels: [], datasets: [{ label: 'GPU Memory Usage', data: [], borderColor: 'purple' }] },
-      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      data: { labels: [], datasets: [{ label: 'GPU Memory Usage', data: [], borderColor: 'purple', tension: 0.4 }] },
+      options: chartOptions
     });
 
     const batchSizeChart = new Chart(document.getElementById('batchSizeChart'), {
       type: 'line',
-      data: { labels: [], datasets: [{ label: 'Batch Size', data: [], borderColor: 'pink' }] },
-      options: { responsive: true, scales: { y: { beginAtZero: true } } }
+      data: { labels: [], datasets: [{ label: 'Batch Size', data: [], borderColor: 'pink', tension: 0.4 }] },
+      options: chartOptions
     });
 
     setInterval(fetchMetrics, 1000);

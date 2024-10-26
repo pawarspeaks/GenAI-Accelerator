@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     
     # Device settings: Select "cuda" if available, otherwise "cpu"
     DEVICE: str = "cuda" if torch.cuda.is_available() else "cpu"
+    # DEVICE: str = "cpu"
+
     FALLBACK_TO_CPU: bool = True
     
     # CPU-specific default batch size
@@ -23,6 +25,7 @@ class Settings(BaseSettings):
 
     # GPU-specific settings
     ENABLE_FP16: bool = torch.cuda.is_available()  # Enable FP16 only if CUDA is available
+    # ENABLE_FP16: bool = False
     ENABLE_DYNAMIC_BATCHING: bool = True
     MODEL_PARALLEL: bool = False
     

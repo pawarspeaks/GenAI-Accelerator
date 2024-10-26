@@ -59,15 +59,28 @@ async def perform_inference(request: InferenceRequest, background_tasks: Backgro
         # Ensure results are in the correct format
         if not isinstance(results, list):
             raise ValueError("Results should be a list")
-        
-        # Check that each result is a dictionary and contains expected keys
-        for result in results:
-            if not isinstance(result, dict):
-                raise ValueError(f"Expected dictionary in results, got {type(result)}")
-            if "text" not in result or "embedding" not in result:
-                raise ValueError(f"Missing keys in result: {result}")
 
-        return {"status": "success", "results": results}
+        # Adapt output format based on CPU or GPU structure
+        adapted_results = []
+        for result in results:
+            if isinstance(result, dict):
+                # GPU format with nested "outputs"
+                if "outputs" in result:
+                    for output in result["outputs"]:
+                        if "logits" in output:
+                            adapted_results.append({
+                                "text": request.texts[results.index(result)],  # Assuming `texts` aligns by index
+                                "embedding": output["logits"]
+                            })
+                # Standard format without nesting
+                elif "text" in result and "embedding" in result:
+                    adapted_results.append(result)
+                else:
+                    raise ValueError(f"Unexpected result format: {result}")
+            else:
+                raise ValueError(f"Expected dictionary in results, got {type(result)}")
+        
+        return {"status": "success", "results": adapted_results}
     
     except Exception as e:
         logger.error(f"Inference error: {str(e)}", exc_info=True)
