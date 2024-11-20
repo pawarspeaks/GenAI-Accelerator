@@ -1,6 +1,6 @@
 # GenAI Accelerator
 
-This project leverages NVIDIA Inference Microservices (NIM) to scale and optimize Generative AI applications. It provides a high-performance solution for deploying and managing large language models and other generative AI systems.
+This project leverages NVIDIA Inference Microservices (NIM) to scale and optimize Generative AI applications. It provides a high-performance solution for deploying and managing large language models and other generative AI systems. 
 
 ## Features
 
